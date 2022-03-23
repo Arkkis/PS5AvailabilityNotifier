@@ -9,15 +9,13 @@ await Runner(client);
 
 async Task Runner(HttpClient client)
 {
-    var response = await client.GetAsync($"https://ps5suomessa.com/api/GetLatestAndPastStoreAvailability?random={new Random().Next(100000, 999999)}");
-    var result = await response.Content.ReadAsStringAsync();
-
-    var json = JsonSerializer.Deserialize<PlaystationApiDto>(result);
-
-    //var json = new PlaystationApiDto { latestAvailability = new Latestavailability { power = new Power { digital = true, digitalUrl = "http://google.com" } } };
-
     while (true)
     {
+        var response = await client.GetAsync($"https://ps5suomessa.com/api/GetLatestAndPastStoreAvailability?random={new Random().Next(100000, 999999)}");
+        var result = await response.Content.ReadAsStringAsync();
+
+        var json = JsonSerializer.Deserialize<PlaystationApiDto>(result);
+
         Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Checking availability");
         var store = PlaystationAvailabilityService.CheckStores(json.latestAvailability);
 
