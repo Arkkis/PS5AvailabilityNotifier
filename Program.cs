@@ -9,6 +9,8 @@ await Runner(client);
 
 async Task Runner(HttpClient client)
 {
+    IStore? lastStore = null;
+
     while (true)
     {
         var response = await client.GetAsync($"https://ps5suomessa.com/api/GetLatestAndPastStoreAvailability?random={new Random().Next(100000, 999999)}");
@@ -16,25 +18,36 @@ async Task Runner(HttpClient client)
 
         var json = JsonSerializer.Deserialize<PlaystationApiDto>(result);
 
-        Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Checking availability");
+        Console.WriteLine(string.Empty);
         var store = PlaystationAvailabilityService.CheckStores(json.latestAvailability);
 
         if (store is not null)
         {
             if (store.digital)
             {
-                Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Digital available!");
-                LaunchUrl(store.digitalUrl);
+                if (lastStore != store)
+                {
+                    Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Digital available at {store.GetType().Name}!");
+                    LaunchUrl(store.digitalUrl);
+                }
+
+                lastStore = store;
             }
 
             if (store.disc)
             {
-                Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Disc available!");
-                LaunchUrl(store.discUrl);
+                if (lastStore != store)
+                {
+                    Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Disc available at {store.GetType().Name}!");
+                    LaunchUrl(store.discUrl);
+                }
+
+                lastStore = store;
             }
         }
         else
         {
+            lastStore = null;
             Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Nothing available.");
         }
 
