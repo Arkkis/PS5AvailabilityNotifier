@@ -9,14 +9,23 @@ await Runner(client);
 
 async Task Runner(HttpClient client)
 {
-    IStore? lastStore = null;
+    string? lastUrl = null;
 
     while (true)
     {
         var response = await client.GetAsync($"https://ps5suomessa.com/api/GetLatestAndPastStoreAvailability?random={new Random().Next(100000, 999999)}");
         var result = await response.Content.ReadAsStringAsync();
 
-        var json = JsonSerializer.Deserialize<PlaystationApiDto>(result);
+        PlaystationApiDto json;
+
+        try
+        {
+            json = JsonSerializer.Deserialize<PlaystationApiDto>(result);
+        }
+        catch (Exception)
+        {
+            continue;
+        }
 
         Console.WriteLine(string.Empty);
         var store = PlaystationAvailabilityService.CheckStores(json.latestAvailability);
@@ -25,29 +34,29 @@ async Task Runner(HttpClient client)
         {
             if (store.digital)
             {
-                if (lastStore != store)
+                if (lastUrl != store.digitalUrl)
                 {
                     Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Digital available at {store.GetType().Name}!");
                     LaunchUrl(store.digitalUrl);
                 }
 
-                lastStore = store;
+                lastUrl = store.digitalUrl;
             }
 
             if (store.disc)
             {
-                if (lastStore != store)
+                if (lastUrl != store.discUrl)
                 {
                     Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Disc available at {store.GetType().Name}!");
                     LaunchUrl(store.discUrl);
                 }
 
-                lastStore = store;
+                lastUrl = store.discUrl;
             }
         }
         else
         {
-            lastStore = null;
+            lastUrl = null;
             Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)} - Nothing available.");
         }
 
